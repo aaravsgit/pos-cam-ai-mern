@@ -2,26 +2,11 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import "./styles.css";
 
-function CircleShape() {
-  return <div className="shape-circle" />;
-}
-
-function StarShape() {
-  return (
-    <svg className="shape-star" viewBox="0 0 100 100" aria-hidden="true">
-      <polygon
-        points="50,5 61,37 95,37 67,57 78,90 50,70 22,90 33,57 5,37 39,37"
-        fill="#c8ac20"
-      />
-    </svg>
-  );
-}
-
-function Tile({ name, price, shape, onAdd }) {
+function Tile({ name, price, emoji, onAdd }) {
   return (
     <div className="tile" onClick={onAdd}>
       <div className="tile-img">
-        {shape === "circle" ? <CircleShape /> : <StarShape />}
+        <span className="tile-emoji" aria-hidden="true">{emoji}</span>
       </div>
       <div className="tile-meta">
         <span>{name}</span>
@@ -31,14 +16,21 @@ function Tile({ name, price, shape, onAdd }) {
   );
 }
 
-
 export default function Shop() {
   const [activeTab, setActiveTab] = useState("shopping");
   const [cart, setCart] = useState([]);
 
+  // Real grocery items
   const products = [
-    { id: "circ", name: "Circle", price: 499, shape: "circle" },
-    { id: "star", name: "Star", price: 399, shape: "star" },
+    { id: "milk",    name: "Whole Milk (1 gal)",   price: 449, emoji: "🥛" },
+    { id: "eggs",    name: "Eggs (12 ct)",         price: 329, emoji: "🥚" },
+    { id: "bread",   name: "Sandwich Bread",       price: 299, emoji: "🍞" },
+    { id: "bananas", name: "Bananas (1 lb)",       price: 139, emoji: "🍌" },
+    { id: "apples",  name: "Apples (3 lb bag)",    price: 499, emoji: "🍎" },
+    { id: "cereal",  name: "Cereal (box)",         price: 529, emoji: "🥣" },
+    { id: "chips",   name: "Potato Chips",         price: 349, emoji: "🍟" },
+    { id: "soda",    name: "Soda (12 oz)",         price: 149, emoji: "🥤" },
+    { id: "water",   name: "Bottled Water (1 L)",  price: 129, emoji: "💧" },
   ];
 
   const addToCart = (p) => {
@@ -76,10 +68,6 @@ export default function Shop() {
             <div className="grid">
               {products.map((p) => (
                 <Tile key={p.id} {...p} onAdd={() => addToCart(p)} />
-              ))}
-              {/* placeholders to match mockup grid */}
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={`ph-${i}`} className="tile tile-empty" />
               ))}
             </div>
           ) : (
