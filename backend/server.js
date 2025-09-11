@@ -5,11 +5,13 @@ import itemRoutes from "./routes/itemRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js";
 import checkoutRoutes from "./routes/checkoutRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import cors from "cors";
 
 dotenv.config();
 connectDB();
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 
 app.use("/api/users", userRoutes);
