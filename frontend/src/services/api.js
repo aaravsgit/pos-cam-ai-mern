@@ -14,12 +14,3 @@ export async function checkout(cart) {
   return res.json();
 }
 
-export const checkout = async (cart, coupon = "") => {
-  const res = await fetch("http://localhost:5000/api/checkout", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ cart, coupon }),
-  });
-  if (!res.ok) throw new Error("Checkout failed");
-  return res.json();
-};
