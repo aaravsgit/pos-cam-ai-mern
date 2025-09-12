@@ -4,33 +4,19 @@ export default function ProductCard({ product, onAdd }) {
   return (
     <div
       onClick={onAdd}
-      style={{
-        border: "1px solid #ccc",
-        borderRadius: "8px",
-        padding: 10,
-        width: "100%",
-         maxWidth: 150,          // smaller max width
-        aspectRatio: "1 / 1",
-        textAlign: "center",
-        cursor: "pointer",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "space-between",
-      }}
+      className="cursor-pointer rounded-lg shadow-lg overflow-hidden bg-white hover:shadow-xl transition flex flex-col"
     >
+      {/* Image on top */}
       <img
-        src={imageUrl ?? "https://via.placeholder.com/150"}
+        src={imageUrl ?? "https://via.placeholder.com/200"}
         alt={name}
-        style={{
-          width: "100%",
-          height: "70%", // image takes 70% of card height
-          objectFit: "cover",
-          borderRadius: "4px",
-        }}
+        className="w-full h-40 object-cover"
       />
-      <div>
-        <h3 style={{ margin: "5px 0" }}>{name}</h3>
-        <p style={{ margin: 0 }}>${price.toFixed(2)}</p>
+
+      {/* Text content below */}
+      <div className="p-4 text-gray-800 flex flex-col items-center">
+        <h3 className="text-lg font-semibold mb-1">{name}</h3>
+        <p className="text-md font-bold">${price.toFixed(2)}</p>
       </div>
     </div>
   );

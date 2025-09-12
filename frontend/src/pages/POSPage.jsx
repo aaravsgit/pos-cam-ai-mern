@@ -1,14 +1,23 @@
 import { useEffect, useState } from "react";
-import ProductCard from "../components/ProductCard";
 import { getItems, checkout } from "../services/api";
+import Webcam from "react-webcam";
 
 export default function POSPage() {
   const [products, setProducts] = useState([]);
   const [cart, setCart] = useState([]);
+  const [activeTab, setActiveTab] = useState("products");
 
   useEffect(() => {
     async function fetchData() {
       const data = await getItems();
+      data.forEach((product, index) => {
+        console.log(
+          `Product ${index + 1}:`,
+          product.name,
+          "Image URL:",
+          product.imageUrl
+        );
+      });
       setProducts(data);
     }
     fetchData();
@@ -25,6 +34,18 @@ export default function POSPage() {
         return [...prevCart, { ...product, quantity: 1 }];
       }
     });
+  };
+
+  const removeFromCart = (productId) => {
+    setCart((prevCart) => prevCart.filter((p) => p._id !== productId));
+  };
+
+  const updateQuantity = (productId, quantity) => {
+    setCart((prevCart) =>
+      prevCart.map((p) =>
+        p._id === productId ? { ...p, quantity: Math.max(1, quantity) } : p
+      )
+    );
   };
 
   const total = cart.reduce((sum, p) => sum + p.price * p.quantity, 0);
@@ -47,64 +68,127 @@ export default function POSPage() {
   };
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h1>POS System</h1>
-      <div
-        style={{
-        display: "flex",
-        justifyContent: "space-between", // pushes left column left & right column right
-        alignItems: "flex-start",
-        paddingLeft: "15px",
-        paddingRight: "15px",
-        width: "100%",
-        boxSizing: "border-box",
-        }}
-      >
-        {/* Left: Products */}
-        <div style={{ flex: 2, marginRight: "15px" }}>
-          <h2>Products</h2>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(3, 1fr)",
-              gap: "20px",
-            }}
-          >
+     <div className="w-full p-5">
+
+    {/* Banner */}
+<div className="w-full flex justify-between items-center bg-gradient-to-r from-blue-400 via-blue-500 to-blue-700 text-black font-bold border-b  mb-4">
+  <div className="px-4">Code For Good</div>
+  <div className="text-center flex-1">Non Profit</div>
+  <div className="px-4">Prototype</div>
+</div>
+
+
+          {/* Tabs */}
+      <div className="flex justify-center mb-6 space-x-4 w-full">
+        <button
+          className={`px-4 py-2 rounded font-semibold ${
+            activeTab === "products"
+              ? "bg-blue-600 text-white"
+              : "bg-gray-200 text-gray-700"
+          }`}
+          onClick={() => setActiveTab("products")}
+        >
+          Products
+        </button>
+        <button
+          className={`px-4 py-2 rounded font-semibold ${
+            activeTab === "camera"
+              ? "bg-blue-600 text-white"
+              : "bg-gray-200 text-gray-700"
+          }`}
+          onClick={() => setActiveTab("camera")}
+        >
+          Camera
+        </button>
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === "products" && (
+        <div className="flex w-full min-h-[80vh] gap-4">
+          {/* Products (50%) */}
+          <div className="w-1/2 grid grid-cols-3 gap-4">
             {products.map((p) => (
-              <ProductCard key={p._id} product={p} onAdd={() => addToCart(p)} />
+              <div
+                key={p._id}
+                className="bg-white text-gray-800 p-4 rounded-lg shadow-lg flex flex-col items-center cursor-pointer hover:shadow-xl transition"
+                onClick={() => addToCart(p)}
+              >
+                <img
+                  src={p.imageUrl ?? "https://via.placeholder.com/150"}
+                  alt={p.name}
+                  className="w-full h-40 object-cover rounded-md mb-2"
+                />
+                <h2 className="text-xl font-semibold mb-1">{p.name}</h2>
+                <p className="text-lg font-bold">${p.price.toFixed(2)}</p>
+              </div>
             ))}
           </div>
-        </div>
 
-        {/* Right: Cart */}
-        <div
-          style={{
-          flex: 1,
-            border: "1px solid #ccc",
-            borderRadius: "8px",
-            padding: "10px",
-            minWidth: "200px",
-            height: "fit-content",
-          }}
-        >
-          <h2>Cart</h2>
-          {cart.length === 0 ? (
-            <p>No items in cart</p>
-          ) : (
-            <ul>
-              {cart.map((p) => (
-                <li key={p._id}>
-                  {p.name} x {p.quantity} - ${(p.price * p.quantity).toFixed(2)}
-                </li>
-              ))}
-            </ul>
-          )}
-          <h3>Total: ${total.toFixed(2)}</h3>
-          <button onClick={handleCheckout} style={{ marginTop: "10px" }}>
-            Checkout
-          </button>
+          {/* Cart (50%) */}
+          <div className="w-1/2 bg-white text-gray-800 p-6 rounded-lg shadow-lg flex flex-col justify-between">
+            <div className="overflow-y-auto mb-4">
+              <h2 className="text-2xl font-semibold mb-4">Cart</h2>
+              <table className="w-full text-left border-collapse mb-4">
+                <thead>
+                  <tr className="border-b">
+                    <th className="py-4 px-3">Item</th>
+                    <th className="py-4 px-3">Qty</th>
+                    <th className="py-4 px-3">Price</th>
+                    <th className="py-4 px-3">Delete</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {cart.map((item) => (
+                    <tr key={item._id} className="border-b">
+                      <td className="py-3 px-3">{item.name}</td>
+                      <td className="py-3 px-3">
+                        <input
+                          type="number"
+                          min="1"
+                          value={item.quantity}
+                          onChange={(e) =>
+                            updateQuantity(item._id, parseInt(e.target.value))
+                          }
+                          className="w-20 border rounded px-2 py-1 text-gray-800"
+                        />
+                      </td>
+                      <td className="py-3 px-3">
+                        ${(item.price * item.quantity).toFixed(2)}
+                      </td>
+                      <td className="py-3 px-3">
+                        <button
+                          onClick={() => removeFromCart(item._id)}
+                          className="bg-red-500 text-white px-3 py-1 rounded"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Total + Checkout */}
+            <div className="flex justify-between items-center font-bold text-lg mb-4">
+              <span>Total:</span>
+              <span>${total.toFixed(2)}</span>
+            </div>
+            <button
+              onClick={handleCheckout}
+              className="w-full bg-green-600 text-white py-3 rounded font-semibold hover:bg-green-700 transition"
+            >
+              Checkout
+            </button>
+          </div>
         </div>
-      </div>
+      )}
+
+      {activeTab === "camera" && (
+        <div className="flex justify-center">
+          <Webcam className="rounded shadow-lg w-full max-w-3xl" />
+        </div>
+      )}
     </div>
   );
 }
