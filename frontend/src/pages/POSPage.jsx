@@ -1,23 +1,20 @@
 import { useEffect, useState } from "react";
 import { getItems, checkout } from "../services/api";
-import Webcam from "react-webcam";
+import CameraPage from "./CameraPage"; // 👈 import it
 
 export default function POSPage() {
   const [products, setProducts] = useState([]);
   const [cart, setCart] = useState([]);
   const [activeTab, setActiveTab] = useState("products");
 
+  const productMap = {
+    Water: products.find(p => p.name === "Water"),
+    Duck: products.find(p => p.name === "Duck")
+  };
+
   useEffect(() => {
     async function fetchData() {
       const data = await getItems();
-      data.forEach((product, index) => {
-        console.log(
-          `Product ${index + 1}:`,
-          product.name,
-          "Image URL:",
-          product.imageUrl
-        );
-      });
       setProducts(data);
     }
     fetchData();
@@ -30,30 +27,26 @@ export default function POSPage() {
         return prevCart.map((p) =>
           p._id === product._id ? { ...p, quantity: p.quantity + 1 } : p
         );
-      } else {
-        return [...prevCart, { ...product, quantity: 1 }];
       }
+      return [...prevCart, { ...product, quantity: 1 }];
     });
   };
 
-  const removeFromCart = (productId) => {
+  const removeFromCart = (productId) =>
     setCart((prevCart) => prevCart.filter((p) => p._id !== productId));
-  };
 
-  const updateQuantity = (productId, quantity) => {
+  const updateQuantity = (productId, quantity) =>
     setCart((prevCart) =>
       prevCart.map((p) =>
         p._id === productId ? { ...p, quantity: Math.max(1, quantity) } : p
       )
     );
-  };
 
   const total = cart.reduce((sum, p) => sum + p.price * p.quantity, 0);
 
   const handleCheckout = async () => {
     if (cart.length === 0) return alert("Cart is empty!");
     const coupon = prompt("Enter a coupon code (or leave blank):");
-
     try {
       const result = await checkout(cart, coupon);
       alert(
@@ -68,17 +61,15 @@ export default function POSPage() {
   };
 
   return (
-     <div className="w-full p-5">
+    <div className="w-full p-5">
+      {/* Banner */}
+      <div className="w-full flex justify-between items-center bg-gradient-to-r from-blue-400 via-blue-500 to-blue-700 text-black font-bold border-b mb-4">
+        <div className="px-4">Code For Good</div>
+        <div className="text-center flex-1">Non Profit</div>
+        <div className="px-4">Prototype</div>
+      </div>
 
-    {/* Banner */}
-<div className="w-full flex justify-between items-center bg-gradient-to-r from-blue-400 via-blue-500 to-blue-700 text-black font-bold border-b  mb-4">
-  <div className="px-4">Code For Good</div>
-  <div className="text-center flex-1">Non Profit</div>
-  <div className="px-4">Prototype</div>
-</div>
-
-
-          {/* Tabs */}
+      {/* Tabs */}
       <div className="flex justify-center mb-6 space-x-4 w-full">
         <button
           className={`px-4 py-2 rounded font-semibold ${
@@ -184,11 +175,14 @@ export default function POSPage() {
         </div>
       )}
 
-      {activeTab === "camera" && (
-        <div className="flex justify-center">
-          <Webcam className="rounded shadow-lg w-full max-w-3xl" />
-        </div>
-      )}
+        {activeTab === "camera" && (
+            <CameraPage
+          products={products}
+          addToCart={addToCart}
+          setActiveTab={setActiveTab}
+          activeTab={activeTab} // 👈 pass activeTab
+        />
+        )}
     </div>
   );
 }
