@@ -20,17 +20,30 @@ export default function POSPage() {
     fetchData();
   }, []);
 
-  const addToCart = (product) => {
-    setCart((prevCart) => {
-      const existing = prevCart.find((p) => p._id === product._id);
-      if (existing) {
-        return prevCart.map((p) =>
-          p._id === product._id ? { ...p, quantity: p.quantity + 1 } : p
-        );
-      }
-      return [...prevCart, { ...product, quantity: 1 }];
-    });
-  };
+const addToCart = (product) => {
+  // Add item to cart
+  setCart((prevCart) => {
+    const existing = prevCart.find((p) => p._id === product._id);
+    if (existing) {
+      return prevCart.map((p) =>
+        p._id === product._id ? { ...p, quantity: p.quantity + 1 } : p
+      );
+    }
+    return [...prevCart, { ...product, quantity: 1 }];
+  });
+
+  // Announce the product name
+  speak(product.name);
+};
+
+// Helper function for speech
+const speak = (text) => {
+  const synth = window.speechSynthesis;
+  if (!synth.speaking) {
+    synth.speak(new SpeechSynthesisUtterance(text));
+  }
+};
+
 
   const removeFromCart = (productId) =>
     setCart((prevCart) => prevCart.filter((p) => p._id !== productId));

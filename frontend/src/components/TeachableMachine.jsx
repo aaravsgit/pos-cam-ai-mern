@@ -9,11 +9,9 @@ export default function TeachableMachine({ products, addToCart, activeTab, setAc
   const modelRef = useRef(null);
   const webcam = useRef(null);
   const loopRef = useRef(null);
-  const [objectInFrame, setObjectInFrame] = useState(false);
 
   const [label, setLabel] = useState("");
-  const [addedThisSession, setAddedThisSession] = useState(false);
-  const lastAddTime = useRef(0);
+  const detected = useRef(false); // synchronous flag
 
   useEffect(() => {
     const loadModel = async () => {
@@ -28,7 +26,7 @@ export default function TeachableMachine({ products, addToCart, activeTab, setAc
         }
       }
 
-      startCamera(); // always start camera
+      startCamera();
     };
     loadModel();
 
@@ -53,64 +51,48 @@ export default function TeachableMachine({ products, addToCart, activeTab, setAc
   };
 
   const loop = async () => {
-    if (!webcam.current || !modelRef.current) return;
+    if (!webcam.current || !modelRef.current || detected.current) return;
 
     webcam.current.update();
 
-    // Only predict when camera tab is active
     if (activeTab === "camera") await predict();
 
-    loopRef.current = requestAnimationFrame(loop);
+    if (!detected.current) {
+      loopRef.current = requestAnimationFrame(loop);
+    }
   };
 
-const predict = async () => {
-  if (!modelRef.current || !webcam.current) return;
+  const predict = async () => {
+    if (!modelRef.current || !webcam.current || detected.current) return;
 
-  const prediction = await modelRef.current.predict(webcam.current.canvas);
-  const bestGuess = prediction.reduce((a, b) => (b.probability > a.probability ? b : a));
+    const prediction = await modelRef.current.predict(webcam.current.canvas);
+    const bestGuess = prediction.reduce((a, b) => (b.probability > a.probability ? b : a));
 
-  setLabel(`${bestGuess.className} (${bestGuess.probability.toFixed(2)})`);
+    setLabel(`${bestGuess.className} (${bestGuess.probability.toFixed(2)})`);
 
-  // Update label container
-  if (labelContainerRef.current) {
-    prediction.forEach((p, i) => {
-      if (labelContainerRef.current.childNodes[i])
-        labelContainerRef.current.childNodes[i].innerHTML =
-          `${p.className}: ${p.probability.toFixed(2)}`;
-    });
-  }
+    if (labelContainerRef.current) {
+      prediction.forEach((p, i) => {
+        if (labelContainerRef.current.childNodes[i])
+          labelContainerRef.current.childNodes[i].innerHTML = `${p.className}: ${p.probability.toFixed(2)}`;
+      });
+    }
 
-  const HIGH_THRESHOLD = 0.85; // trigger add
-  const LOW_THRESHOLD = 0.3;   // reset when object leaves
-
-  if (bestGuess.className === "Water" || bestGuess.className === "Duck") {
-    if (bestGuess.probability > HIGH_THRESHOLD && !objectInFrame && !addedThisSession) {
+    if (bestGuess.probability > 0.85 && (bestGuess.className === "Water" || bestGuess.className === "Duck")) {
       const product = products.find((p) => p.name === bestGuess.className);
       if (product) {
         addToCart(product);
         setActiveTab("products");
-        setAddedThisSession(true);
-        setObjectInFrame(true);
-        speak(bestGuess.className);
+
+        // stop future predictions
+        detected.current = true;
+        if (loopRef.current) {
+          cancelAnimationFrame(loopRef.current);
+          loopRef.current = null;
+        }
       }
-    } else if (bestGuess.probability < LOW_THRESHOLD) {
-      // Object left the frame
-      setObjectInFrame(false);
     }
-  } else {
-    // Not a relevant object
-    setObjectInFrame(false);
-  }
-};
-  const speak = (text) => {
-    const synth = window.speechSynthesis;
-    synth.speak(new SpeechSynthesisUtterance(text));
   };
 
-  // Reset addedThisSession only when switching back to camera tab
-  useEffect(() => {
-    if (activeTab === "camera") setAddedThisSession(false);
-  }, [activeTab]);
 
   return (
     <div className="p-4 border rounded-lg bg-white shadow">
